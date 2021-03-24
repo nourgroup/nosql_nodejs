@@ -15,7 +15,9 @@ app.use((req, res, next) => {
  });
 
 /*app.use(express.json());*/
-
+/*TODO problem: when i use a code below and use angular app to insert , the get method doesnt send 
+   anything,
+*/
 /*
 app.post('/api/:name/:prix', (req, res, next) => {
    var stuff = {}
