@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql');
 
 const app = express();
+app.use(express.json())    // <==== parse request body as JSON
+
 
 app.use((req, res, next) => {
    res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,30 +32,19 @@ db.connect(function(err) {
    */ 
 
 app.post('/api/add', (req, res, next) => {
-   /*var stuff = {}
+   var stuff = {}
+   db.query("insert into produits values (null,'?','2021-03-25 00:00:00','2021-03-25 00:00:00','by','?')",[req.body.data.name,req.body.data.price], function (err, result) {
+      if (err){
+         stuff["status"] = 400  
+         stuff["status_message"] = "Product not inserted"
+      }else{
+         stuff["status"] = 200
+         stuff["status_message"] = "Product inserted"
+      }
+      res.json(stuff)
+   });
 
-   const db = mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "",
-      database : "tp1_m1dfs"
-  });*/
-
-  /*db.connect(function(err) {
-    if (err) throw err;
-       db.query("insert into produits values (null,'?','2021-01-25 00:00:00','2021-01-25 00:00:00','?','?')",[res.params.id,res.params.id,res.params.prix], function (err, result) {
-          if (err){
-            stuff["status"] = 400  
-            stuff["status_message"] = "Product not inserted"
-          }else{
-            stuff["status"] = 200
-            stuff["status_message"] = "Product inserted"
-          }
-          res.json(stuff)
-        });
-  });*/
-  // recuperer les données du body
-  res.json({'price ' : req.body})
+   //res.json({'dd': Date.getDate()})
  });
    /*
                                     --- Supprimer le produit ---
@@ -80,20 +71,21 @@ app.post('/api/add', (req, res, next) => {
    /*
                                     --- Mettre à jour le produit ---
    */ 
- app.put('/api/update/:id/:prix', (req, res, next) => {
+ app.put('/api/update', (req, res, next) => {
+    stuff = {}
   // test if req.params.name equal to _ALL , number , String
 
-         /*db.execute("update produits set prix = ? where id_produit = ? ",[req.params.data.value,req.params.data.id], function (err, result) {
-            if (err){
-               stuff["status"] = 400  
-               stuff["status_message"] = "Product does not updated"
-            }else{
-               stuff["status"] = 200
-               stuff["status_message"] = "Product was updated"
-            }
-            res.json(stuff)
-         });*/
-         res.json({id : req.body})
+      db.query("update produits set prix = ? where id_produit = ? ",[req.body.data.value,req.body.data.id], function (err, result) {
+         if (err){
+            stuff["status"] = 400  
+            stuff["status_message"] = "Product does not updated"
+         }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product was updated"
+         }
+         res.json(stuff)
+      });
+      
   });
 /*
                            --- afficher les produits dans la page lecture et visualisation ---
@@ -148,11 +140,8 @@ app.get('/api/name/:name', (req, res, next) => {
                               pour afficher la courbe, liste date et liste prix 
 */
 app.get('/api/id/:name', (req,res,next) => {
-   var stuff = {}
-   
+      var stuff = {}
 
-
-      
       let valueprix = [];
       
       let valuedate = []
