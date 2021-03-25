@@ -7,6 +7,7 @@ const app = express();
 /*app.use((req, res) => {
    res.json({ message: 'Votre requête a bien été reçue !' }); 
 });*/
+
 app.use((req, res, next) => {
    res.setHeader('Access-Control-Allow-Origin', '*');
    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
@@ -18,26 +19,21 @@ app.use((req, res, next) => {
 /*TODO problem: when i use a code below and use angular app to insert , the get method doesnt send 
    anything,
 */
-/*
-app.post('/api/:name/:prix', (req, res, next) => {
-   var stuff = {}
+
+app.post('/api/add', (req, res, next) => {
+   /*var stuff = {}
 
    const db = mysql.createConnection({
-
-    host: "localhost",
- 
-    user: "root",
- 
-    password: "",
-
-    database : "tp1_m1dfs"
- 
-  });
+      host: "localhost",
+      user: "root",
+      password: "",
+      database : "tp1_m1dfs"
+  });*/
 
   // test if req.params.name equal to _ALL , number , String
-  db.connect(function(err) {
+  /*db.connect(function(err) {
     if (err) throw err;
-       db.query("insert into produits values (null,'?','','','?','?')",[res.params.name,res.params.name,res.params.prix], function (err, result) {
+       db.query("insert into produits values (null,'?','2021-01-25 00:00:00','2021-01-25 00:00:00','?','?')",[res.params.id,res.params.id,res.params.prix], function (err, result) {
           if (err){
             stuff["status"] = 400  
             stuff["status_message"] = "Product not inserted"
@@ -47,9 +43,65 @@ app.post('/api/:name/:prix', (req, res, next) => {
           }
           res.json(stuff)
         });
+  });*/
+  res.json({'price ' : req.body})
+ });
+   /*
+      supprimer le produit
+   */ 
+ app.delete('/api/delete/:id', (req, res, next) => {
+   const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database : "tp1_m1dfs"
+  });
+
+  // test if req.params.name equal to _ALL , number , String
+  db.connect(function(err) {
+    if (err) throw err;
+       db.query("DELETE FROM produits WHERE id_produit = ?",[req.params.id], function (err, result) {
+          if (err){
+            stuff["status"] = 400  
+            stuff["status_message"] = "Product does not deleted"
+          }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product was deleted"
+          }
+          res.json(stuff)
+        });
   });
  });
+ /*
+   mettre à jour le produit
+ */ 
+ app.put('/api/update/:id/:prix', (req, res, next) => {
+   const db = mysql.createConnection({
+      host: "localhost",
+      user: "root",
+      password: "",
+      database : "tp1_m1dfs"
+  });
+
+  // test if req.params.name equal to _ALL , number , String
+  db.connect(function(err) {
+      if (err) throw err;
+         db.query("update produits set prix = ? where id_produit = ? ",[req.params.data.value,req.params.data.id], function (err, result) {
+            if (err){
+               stuff["status"] = 400  
+               stuff["status_message"] = "Product does not updated"
+            }else{
+               stuff["status"] = 200
+               stuff["status_message"] = "Product was updated"
+            }
+            res.json(stuff)
+         });
+   });
+  });
+/*
+   afficher les produits dans la page lecture et visualisation
 */
+
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
 
@@ -107,7 +159,9 @@ app.get('/api/name/:name', (req, res, next) => {
       }
     });
  });
-
+/*
+   pour afficher la courbe, liste date et liste prix 
+*/
 app.get('/api/id/:name', (req,res,next) => {
    var stuff = {}
    
@@ -124,13 +178,26 @@ app.get('/api/id/:name', (req,res,next) => {
    });
 
    db.connect(function(err) {
+      
+      let valueprix = [];
+      
+      let valuedate = []
+      let evolutions = {}
       if (err) throw err;
       db.query("SELECT * FROM produits, evolutions where evolutions.id_produit = produits.id_produit and produits.id_produit = ? order by evolutions.date_up", [req.params.name], function(err, result){
          stuff["status"] = 200
          stuff["status_message"] = "Products Found"
-          
-         //stuff["data"]["evolutions"]["prix"] = [12,33]
-         //stuff["data"]["evolutions"]["date"] = ['dd','dd']
+         stuff["data"] = result
+         //evolutions
+         for(let i=0 ;i < result.length ; i ++ ){
+            valueprix.push(result[i].prix)
+            valuedate.push(result[i].date_up)
+         }
+         
+         evolutions = {"evolutions" : {"date" :valuedate, "prix" :  valueprix}}
+
+         stuff["data"] = evolutions
+         
          res.json(stuff)
       });
    });
