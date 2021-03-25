@@ -33,7 +33,7 @@ db.connect(function(err) {
 
 app.post('/api/add', (req, res, next) => {
    var stuff = {}
-   db.query("insert into produits values (null,'?','2021-03-25 00:00:00','2021-03-25 00:00:00','by','?')",[req.body.data.name,req.body.data.price], function (err, result) {
+   db.query("insert into produits values (null,?,'2021-03-25 00:00:00','2021-03-25 00:00:00',?,'?')",[req.body.data.name,req.body.data.price], function (err, result) {
       if (err){
          stuff["status"] = 400  
          stuff["status_message"] = "Product not inserted"
@@ -93,10 +93,7 @@ app.post('/api/add', (req, res, next) => {
 
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
-
     // test if req.params.name equal to _ALL , number , String
-
-
       if(req.params.name === '_ALL'){
          db.query("SELECT * from produits", function (err, result) {
             if (err){
@@ -110,7 +107,7 @@ app.get('/api/name/:name', (req, res, next) => {
             res.json(stuff)
           });
       }else if(isNaN(req.params.name)){
-         db.query("SELECT * from produits where nom like '%"+req.params.name+"'%" , function (err, result) {
+         db.query("SELECT * from produits where nom like %?%" ,[req.params.name], function (err, result) {
             if (err){
               stuff["status"] = 400  
               stuff["status_message"] = "Product Found"
