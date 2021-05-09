@@ -17,7 +17,7 @@ app.use((req, res, next) => {
    host: "localhost",
    user: "root",
    password: "",
-   database : "tp1_m1dfs"
+   database : "projet_nosql"
 });
 db.connect(function(err) {
    if(err){
@@ -31,9 +31,12 @@ db.connect(function(err) {
                                     ---inserer un produit
    */ 
 
-app.post('/api/add', (req, res, next) => {
+/**TODO 
+ *  recevoir le numero de la categorie
+ * **/
+   app.post('/api/add', (req, res, next) => {
    var stuff = {}
-   db.query("insert into produits values (null,?,'2021-03-25 00:00:00','2021-03-25 00:00:00',?,'?')",[req.body.data.name,req.body.data.price], function (err, result) {
+   db.query("insert into produits values (null,?,'2021-03-25 00:00:00','2021-03-25 00:00:00',?,'?',?)",[req.body.data.name,req.body.data.name,req.body.data.price,req.body.data.id_categorie], function (err, result) {
       if (err){
          stuff["status"] = 400  
          stuff["status_message"] = "Product not inserted"
@@ -43,8 +46,7 @@ app.post('/api/add', (req, res, next) => {
       }
       res.json(stuff)
    });
-
-   //res.json({'dd': Date.getDate()})
+   
  });
    /*
                                     --- Supprimer le produit ---
@@ -73,10 +75,20 @@ app.post('/api/add', (req, res, next) => {
    */ 
  app.put('/api/update', (req, res, next) => {
     stuff = {}
-  // test if req.params.name equal to _ALL , number , String
-
-      db.query("update produits set prix = ? where id_produit = ? ",[req.body.data.value,req.body.data.id], function (err, result) {
+/*
+   http://www.codediesel.com/nodejs/mysql-transactions-in-nodejs/
+*/
+      db.query("update produits set prix = ? where id_produit = ? ",[req.body.data.value,req.body.data.id], (err, result) => {
          if (err){
+            stuff["status"] = 400  
+            stuff["status_message"] = "Product does not updated"
+         }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product was updated"
+         }
+      });
+      db.query("insert into evolutions values (null,?,'2021-03-25 00:00:00',?)",[req.body.data.id,req.body.data.value], (err,result)=>{
+         if(err){
             stuff["status"] = 400  
             stuff["status_message"] = "Product does not updated"
          }else{
@@ -90,15 +102,20 @@ app.post('/api/add', (req, res, next) => {
 /*
                            --- afficher les produits dans la page lecture et visualisation ---
 */
-
+/**TODO 
+ *  Ajouter la categorie de produit
+ * **/
+//////
+//////
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
     // test if req.params.name equal to _ALL , number , String
       if(req.params.name === '_ALL'){
-         db.query("SELECT * from produits", function (err, result) {
+         db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie", function (err, result) {
             if (err){
+               log.console(err)
               stuff["status"] = 400  
-              stuff["status_message"] = "Product Found"
+              stuff["status_message"] = "Product not Found"
             }else{
               stuff["status"] = 200
               stuff["status_message"] = "Product Found"
@@ -107,10 +124,10 @@ app.get('/api/name/:name', (req, res, next) => {
             res.json(stuff)
           });
       }else if(isNaN(req.params.name)){
-         db.query("SELECT * from produits where nom like %?%" ,[req.params.name], function (err, result) {
+         db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie and nom like ?" ,[req.params.name], function (err, result) {
             if (err){
               stuff["status"] = 400  
-              stuff["status_message"] = "Product Found"
+              stuff["status_message"] = "Product not Found"
             }else{
               stuff["status"] = 200
               stuff["status_message"] = "Product Found"
@@ -119,10 +136,10 @@ app.get('/api/name/:name', (req, res, next) => {
             res.json(stuff)
           });
       }else{
-         db.query("SELECT * from produits where id_produit = ?",[req.params.name], function (err, result) {
+         db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie and id_produit = ? ",[req.params.name], function (err, result) {
             if (err){
                stuff["status"] = 400  
-               stuff["status_message"] = "Product Found"
+               stuff["status_message"] = "Product not Found"
             }else{
                stuff["status"] = 200
                stuff["status_message"] = "Product Found"
@@ -133,9 +150,38 @@ app.get('/api/name/:name', (req, res, next) => {
       }
 
  });
+ /*
+                           --- envoyer liste categories ---
+*/
+/**TODO 
+ *  Ajouter la categorie de produit
+ * **/
+//////
+//////
+app.get('/api/categorie', (req, res, next) => {
+   var stuff = {}
+    // test if req.params.name equal to _ALL , number , String
+      db.query("SELECT * from categories", function (err, result) {
+         if (err){
+            log.console(err)
+            stuff["status"] = 400  
+            stuff["status_message"] = "Product not Found"
+         }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product Found"
+            stuff["data"] = result
+         }
+         res.json(stuff)
+         });
+ });
 /*
                               pour afficher la courbe, liste date et liste prix 
 */
+
+/**TODO 
+ *  Ajouter l'affichage de la categorie de produit
+ * **/
+
 app.get('/api/id/:name', (req,res,next) => {
       var stuff = {}
 
@@ -143,8 +189,7 @@ app.get('/api/id/:name', (req,res,next) => {
       
       let valuedate = []
       let evolutions = {}
-      if (err) throw err;
-      db.query("SELECT * FROM produits, evolutions where evolutions.id_produit = produits.id_produit and produits.id_produit = ? order by evolutions.date_up", [req.params.name], function(err, result){
+      db.query("SELECT * FROM produits, evolutions, categories where evolutions.id_produit = produits.id_produit and produits.categorie_produit = categories.id_categorie and produits.id_produit = ? order by evolutions.date_up", [req.params.name], function(err, result){
          stuff["status"] = 200
          stuff["status_message"] = "Products Found"
          stuff["data"] = result
