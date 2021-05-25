@@ -1,40 +1,31 @@
-//const express = require('express');
+
 //const bodyParser = require('body-parser');
 const mysql = require('mysql');
 var dateFormat = require('dateformat');
 
-//const app = express();
-//app.use(express.json())    // <==== parse request body as JSON
 
 
-/*app.use((req, res, next) => {
-   res.setHeader('Access-Control-Allow-Origin', '*');
-   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-   next();
- });
-*/
+
+var deuxDB= true;
  var db = mysql.createConnection({
    host: "localhost",
    user: "root",
    password: "",
    database : "projet_nosql"
 });
-/*
+
 db.connect(function(err) {
    if(err){
+      deuxDB = false
       console.log("db error")
    }else{
       console.log("db succes")
-      app.listen(4000, () => {
-         console.log("listen");
-      })
    }
 })
-*/
+
 const express = require('express')
 const app = express()
-//app.use(express.json())
+app.use(express.json());
 /**
  *                      Import MongoClient & connexion à la DB
  */
@@ -43,18 +34,13 @@ const url = 'mongodb://localhost:27017';
 const dbName = 'projet_nosql';
 let dbm
 
-app.use(express.json());
-
-
 MongoClient.connect(url, {useUnifiedTopology: true}, function(err, client) {
   if(err){
+   deuxDB = false
     console.log("not connected to the server");
   }else{
     console.log("Connected successfully to server");
     dbm = client.db(dbName);
-    app.listen(4000, () => {
-      console.log("listen");
-    })
   }
 });
 
@@ -64,8 +50,13 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   next();
 });
+if(deuxDB){
+   app.listen(4000, () => {
+      console.log("listen");
+    })
+}
 /**
-                                 --1-inserer un produit---
+                                 --1-inserer un produit et le mettre dans l'evolution---
 */ 
 
 /**TODO 
@@ -73,13 +64,13 @@ app.use((req, res, next) => {
  * **/
 
 /*
-                                          --- Mysql ----
+                                          --- Mysql ---- ok
 */
 var day=dateFormat(new Date(), "yyyy-mm-dd h:MM:ss");
 /*
 app.post('/api/add', (req, res, next) => {
    var stuff = {}
-   db.query("insert into produits values (null,?,?,?,?,'?',?)",[req.body.data.name,day,day,req.body.data.name,req.body.data.price,req.body.data.id_categorie], function (err, result) {
+   db.query("insert into produits values (null,?,?,?,?,'?',?)",[req.body.data.name,day,day,req.body.data.description,req.body.data.price,req.body.data.categorie.id_categorie], function (err, result) {
       if (err){
          stuff["status"] = 400  
          stuff["status_message"] = "Product not inserted"
@@ -93,28 +84,40 @@ app.post('/api/add', (req, res, next) => {
 */
 
 /*
-                                          --- MongoDB ---
+                                          --- MongoDB --- ok
 */
 
 app.post('/api/add', (req, res, next) => {
-   /*
+   var stuff = {}
    const produit = {
       'nom' : req.body.data.name,
       'date_in': day,
       'date_up': day,
-      'description': req.body.data.name,
+      'description': req.body.data.description,
       'prix': req.body.data.price,
-         'categorie':{
-            'nom_categorie': req.body.data.name
+      'categorie':{
+         'id_categorie' : parseInt(req.body.data.categorie.id_categorie),
+         'nom_categorie': req.body.data.categorie.nom_categorie
+      },
+      'evolution': [
+         {
+            'date_up': day,
+            'prix': req.body.data.price
          }
+      ]
    }
-   dbm.collection('produit').insertOne(produit, function (
-      err,
-      info
-   ){
-      res.json(info.ops[0])
+   dbm.collection('produit').insertOne(produit, (err,info) => {
+      if(err){
+         stuff["status"] = 400
+         stuff["status_message"] = "Product Not updated"
+         stuff["data"] = null
+      }else{
+         stuff["status"] = 200
+         stuff["status_message"] = "Product was updated"
+         stuff["data"] = info
+      }
+      res.json(stuff)
    })
-   */
 });
 
 /*
@@ -122,44 +125,41 @@ app.post('/api/add', (req, res, next) => {
 */ 
 
 /*
-                                          --- Mysql ----
+                                          --- Mysql ---- ok
 */
-
 /*
 app.delete('/api/delete/:id', (req, res, next) => {
 stuff = {}
-
-      db.query("DELETE FROM produits WHERE id_produit = ?",[req.params.id], function (err, result) {
-         if (err){
+   db.query("DELETE FROM produits WHERE id_produit = ?",[req.params.id], function (err, result) {
+      if (err){
          stuff["status"] = 400  
          stuff["status_message"] = "Product does not deleted"
-         }else{
+      }else{
          stuff["status"] = 200
          stuff["status_message"] = "Product was deleted"
-         
-         }
-         res.json(stuff)
-      });
+      }
+      res.json(stuff)
+   });
 });
 */
  /*
-                                          --- MongoDB ---
+                                          --- MongoDB --- ok
  */
 
 var ObjectId = require('mongodb').ObjectID;
 
- app.delete('/api/delete/:id', (req, res, next) => {
+app.delete('/api/delete/:id', (req, res, next) => {
    dbm.collection('produit').remove({'_id' : ObjectId(req.params.id)})
    res.json({'response':req.params.id})
 });
 
 
 /*
-                                 --3- Mettre à jour le prix du produit et inserer dans l'évolution---
+                                 --3- Mettre à jour le prix du produit et l'inserer dans l'évolution---
 */ 
 /*
 http://www.codediesel.com/nodejs/mysql-transactions-in-nodejs/
-                                       --- Mysql ---
+                                       --- Mysql --- ok
 */
 /*
 app.put('/api/update', (req, res, next) => {
@@ -188,7 +188,7 @@ app.put('/api/update', (req, res, next) => {
 */
 
 /*
-                                          --- Mongodb ----
+                                          --- Mongodb ---- ok
 */
 
 
@@ -207,7 +207,7 @@ app.put('/api/update', (req, res, next) => {
                            --4- Afficher les produits dans la page lecture et visualisation ---
 */
 /*
-                                          --- Mysql ----
+                                          --- Mysql ---- ko recherche
 */
 
 /** 
@@ -216,28 +216,37 @@ app.put('/api/update', (req, res, next) => {
 /*
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
-    // test if req.params.name equal to _ALL , number , String
       if(req.params.name === '_ALL'){
          db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie", function (err, result) {
             if (err){
                log.console(err)
-              stuff["status"] = 400  
-              stuff["status_message"] = "Product not Found"
+               stuff["status"] = 400  
+               stuff["status_message"] = "Product not Found"
             }else{
-              stuff["status"] = 200
-              stuff["status_message"] = "Product Found"
-              stuff["data"] = result
+               result.forEach(element => {
+                  element['categorie'] = {'id_categorie' : element['id_categorie'], 'nom_categorie':element['nom_categorie']} 
+                  delete element['id_categorie']
+                  delete element['nom_categorie']
+               });
+               stuff["status"] = 200
+               stuff["status_message"] = "Product Found"
+               stuff["data"] = result
             }
             res.json(stuff)
           });
       }else if(isNaN(req.params.name)){
-         db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie and nom like ?" ,[req.params.name], function (err, result) {
+         db.query("SELECT * from produits , categories where produits.categorie_produit = categories.id_categorie and nom like '%"+req.params.name+"%'" , function (err, result) {
             if (err){
               stuff["status"] = 400  
               stuff["status_message"] = "Product not Found"
             }else{
               stuff["status"] = 200
               stuff["status_message"] = "Product Found"
+              result.forEach(element => {
+                  element['categorie'] = {'id_categorie' : element['id_categorie'], 'nom_categorie':element['nom_categorie']} 
+                  delete element['id_categorie']
+                  delete element['nom_categorie']
+               });
               stuff["data"] = result
             }
             res.json(stuff)
@@ -258,12 +267,11 @@ app.get('/api/name/:name', (req, res, next) => {
  });
 */
 /*
-                                          --- Mongodb ----
+                                          --- Mongodb ---- ko recherche
 */
 /*
    p1 : id_produit : mysql et _id mongodb
 */
-
 
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
@@ -271,41 +279,57 @@ app.get('/api/name/:name', (req, res, next) => {
    var allelement = []
    if(req.params.name === '_ALL'){
       dbm.collection('produit').find()
-      .toArray(function (err, items) {
-         stuff["status"] = 200
-         stuff["status_message"] = "Product Found"
-         items.forEach(element => {
-            element['id_produit']      = element['_id']
-            element['nom_categorie']   = element['nom_categorie']
-            delete element["_id"]
-            allelement.push(element)
-         });
-         stuff["data"] = allelement
+      .toArray( (err, items) => {
+         if(err){
+            stuff["status"] = 400
+            stuff["status_message"] = "Product Not Found"
+            stuff["data"] = null
+         }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product Found"
+            items.forEach(element => {
+               element['id_produit']      = element['_id']
+               element['nom_categorie']   = element['nom_categorie']
+               delete element["_id"]
+               allelement.push(element)
+            });
+            stuff["data"] = allelement
+         }
          res.json(stuff)
       })
    }else if(isNaN(req.params.name)){
+      dbm.collection('produit').find({nom:{$regex : '^'+req.params.name, '$options' : 'i'}})
+      .toArray( (err, items) => {
+         if(err){
+            stuff["status"] = 400
+            stuff["status_message"] = "Product Not Found"
+            stuff["data"] = null
+         }else{
+            stuff["status"] = 200
+            stuff["status_message"] = "Product Found"
+            stuff["data"] = items
+         }
+         res.json(stuff)
+      })
+   }else{
       dbm.collection('produit').find({'_id': ObjectId(req.params.name)})
-      .toArray(function (err, items) {
+      .toArray( (err, items) => {
          stuff["status"] = 200
          stuff["status_message"] = "Product Found"
          stuff["data"] = items
          res.json(stuff)
       })
-   }else{
-      
    }
- });
-
-
+});
 /*
-                               --5- Envoyer liste categories ---
+                               --5- Afficher la liste categories ---
 */
 /** TODO 
  *  Ajouter la categorie de produit
  * **/
 
 /**
-                                          --- Mysql ----
+                                          --- Mysql ---- ok
 **/
 /*
 app.get('/api/categorie', (req, res, next) => {
@@ -327,23 +351,31 @@ app.get('/api/categorie', (req, res, next) => {
 */
 
 /**
-                                          --- Mongodb ----
+                                          --- Mongodb ---- ok
 **/
 
 app.get('/api/categorie', (req, res, next) => {
    stuff = {}
-   var a = dbm.collection('produit').distinct('prix')
-   stuff["status"] = 200
-   stuff["status_message"] = "Product Found"
-   stuff["data"] = a
-   res.json(stuff) 
+   var a = dbm.collection('produit').distinct('categorie')
+   .then(results => {
+      stuff["status"] = 200
+      stuff["status_message"] = "Product Found"
+      stuff["data"] = results
+      res.json(stuff)
+  }).catch(err => {
+      stuff["status"] = 400
+      stuff["status_message"] = "Product Not Found"
+      stuff["data"] = null
+      //stuff["data"] = err
+  })
 });
 
 /*
-                        --6- pour afficher la courbe, liste date et liste prix ---
+                        --6- afficher la liste (date et prix) pour la courbe coté client API---
 */
+
 /**
-                                          --- Mysql ----
+                                          --- Mysql ---- ok
 **/
 
 /**TODO 
@@ -352,9 +384,8 @@ app.get('/api/categorie', (req, res, next) => {
 
 /*
 app.get('/api/id/:name', (req,res,next) => {
+      let valueprix = []
       var stuff = {}
-
-      let valueprix = [];
       
       let valuedate = []
       let evolutions = {}
@@ -377,40 +408,46 @@ app.get('/api/id/:name', (req,res,next) => {
 });
 */
 /**
-                                          --- Mongodb ----
+                                          --- Mongodb ---- ok
 **/
 
 app.get('/api/id/:name', (req, res, next) => {
-   let valueprix = [];   
+   let valueprix = []   
    let valuedate = []
+   let nom 
 
    var stuff = {}
    var allelement = []
    dbm.collection('produit').find({'_id' : ObjectId(req.params.name)})
    .toArray(function (err, items) {
-      
-      // adapter _id mongodb avec id_produit que le client API attend
-      /*items.forEach(element => {
-         element['id_produit'] = element['_id']
-         delete element["_id"]
-         allelement.push(element)
-      });*/
-
-      items.forEach(el => {
-         allelement.push(el['evolution'])
-      })
-      for(let i=0 ;i < allelement[0].length ; i ++ ){
-         valueprix.push(allelement[0][i].prix)
-         valuedate.push(allelement[0][i].date_up)
+         if(err){
+            stuff["status"] = 400
+            stuff["status_message"] = "Product not Found"
+            stuff["data"] = null
+            res.json(stuff)
+         }else{
+            items.forEach(el => {
+               allelement.push(el['evolution'])
+               nom = el['nom']
+            })
+            for(let i=0 ;i < allelement[0].length ; i ++ ){
+               valueprix.push(allelement[0][i].prix)
+               valuedate.push(allelement[0][i].date_up)
+            }
+         
+            evolutions =   {"evolutions" : {
+                              "date" :valuedate, 
+                              "prix" :  valueprix
+                              },
+                              "nom" : nom
+                           }
+            
+            stuff["status"] = 200
+            stuff["status_message"] = "Product Found"
+            stuff["data"] = evolutions
+            
+            res.json(stuff)
       }
-      
-      evolutions = {"evolutions" : {"date" :valuedate, "prix" :  valueprix}}
-      
-      stuff["status"] = 200
-      stuff["status_message"] = "Product Found"
-      stuff["data"] = evolutions
-      
-      res.json(stuff)
    })
 });
 
