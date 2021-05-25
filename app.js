@@ -67,7 +67,7 @@ if(deuxDB){
                                           --- Mysql ---- ok
 */
 var day=dateFormat(new Date(), "yyyy-mm-dd h:MM:ss");
-/*
+
 app.post('/api/add', (req, res, next) => {
    var stuff = {}
    db.query("insert into produits values (null,?,?,?,?,'?',?)",[req.body.data.name,day,day,req.body.data.description,req.body.data.price,req.body.data.categorie.id_categorie], function (err, result) {
@@ -81,12 +81,12 @@ app.post('/api/add', (req, res, next) => {
       res.json(stuff)
    });
 });
-*/
+
 
 /*
                                           --- MongoDB --- ok
 */
-
+/*
 app.post('/api/add', (req, res, next) => {
    var stuff = {}
    const produit = {
@@ -119,7 +119,7 @@ app.post('/api/add', (req, res, next) => {
       res.json(stuff)
    })
 });
-
+*/
 /*
                                  --2- Supprimer un produit ---
 */ 
@@ -127,7 +127,7 @@ app.post('/api/add', (req, res, next) => {
 /*
                                           --- Mysql ---- ok
 */
-/*
+
 app.delete('/api/delete/:id', (req, res, next) => {
 stuff = {}
    db.query("DELETE FROM produits WHERE id_produit = ?",[req.params.id], function (err, result) {
@@ -141,18 +141,18 @@ stuff = {}
       res.json(stuff)
    });
 });
-*/
+
  /*
                                           --- MongoDB --- ok
  */
 
 var ObjectId = require('mongodb').ObjectID;
-
+/*
 app.delete('/api/delete/:id', (req, res, next) => {
    dbm.collection('produit').remove({'_id' : ObjectId(req.params.id)})
    res.json({'response':req.params.id})
 });
-
+*/
 
 /*
                                  --3- Mettre à jour le prix du produit et l'inserer dans l'évolution---
@@ -161,7 +161,7 @@ app.delete('/api/delete/:id', (req, res, next) => {
 http://www.codediesel.com/nodejs/mysql-transactions-in-nodejs/
                                        --- Mysql --- ok
 */
-/*
+
 app.put('/api/update', (req, res, next) => {
    stuff = {}
 
@@ -185,13 +185,13 @@ app.put('/api/update', (req, res, next) => {
       res.json(stuff)
    });
 });
-*/
+
 
 /*
                                           --- Mongodb ---- ok
 */
 
-
+/*
 app.put('/api/update', (req, res, next) => {
    stuff = {}
    dbm.collection('produit').update({'_id' : ObjectId(req.body.data.id)},{$set: {'prix': parseInt(req.body.data.value)}})
@@ -201,7 +201,7 @@ app.put('/api/update', (req, res, next) => {
    stuff["status_message"] = "Product does not updated"
    res.json(stuff)
 });
-
+*/
 
 /*
                            --4- Afficher les produits dans la page lecture et visualisation ---
@@ -213,7 +213,7 @@ app.put('/api/update', (req, res, next) => {
 /** 
  *                               TODO problème dans la recherche SQL mongodb
  * **/
-/*
+
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
       if(req.params.name === '_ALL'){
@@ -265,14 +265,14 @@ app.get('/api/name/:name', (req, res, next) => {
             });
       }
  });
-*/
+
 /*
                                           --- Mongodb ---- ko recherche
 */
 /*
    p1 : id_produit : mysql et _id mongodb
 */
-
+/*
 app.get('/api/name/:name', (req, res, next) => {
    var stuff = {}
    var i = 0
@@ -321,6 +321,7 @@ app.get('/api/name/:name', (req, res, next) => {
       })
    }
 });
+*/
 /*
                                --5- Afficher la liste categories ---
 */
@@ -331,7 +332,7 @@ app.get('/api/name/:name', (req, res, next) => {
 /**
                                           --- Mysql ---- ok
 **/
-/*
+
 app.get('/api/categorie', (req, res, next) => {
    var stuff = {}
     // test if req.params.name equal to _ALL , number , String
@@ -348,12 +349,12 @@ app.get('/api/categorie', (req, res, next) => {
          res.json(stuff)
    });
 });
-*/
+
 
 /**
                                           --- Mongodb ---- ok
 **/
-
+/*
 app.get('/api/categorie', (req, res, next) => {
    stuff = {}
    var a = dbm.collection('produit').distinct('categorie')
@@ -369,7 +370,7 @@ app.get('/api/categorie', (req, res, next) => {
       //stuff["data"] = err
   })
 });
-
+*/
 /*
                         --6- afficher la liste (date et prix) pour la courbe coté client API---
 */
@@ -382,11 +383,11 @@ app.get('/api/categorie', (req, res, next) => {
  *  Ajouter l'affichage de la categorie de produit
  * **/
 
-/*
+
 app.get('/api/id/:name', (req,res,next) => {
       let valueprix = []
       var stuff = {}
-      
+
       let valuedate = []
       let evolutions = {}
       db.query("SELECT * FROM produits, evolutions, categories where evolutions.id_produit = produits.id_produit and produits.categorie_produit = categories.id_categorie and produits.id_produit = ? order by evolutions.date_up", [req.params.name], function(err, result){
@@ -398,19 +399,24 @@ app.get('/api/id/:name', (req,res,next) => {
             valueprix.push(result[i].prix)
             valuedate.push(result[i].date_up)
          }
-         
-         evolutions = {"evolutions" : {"date" :valuedate, "prix" :  valueprix}}
+         //TODO
+         evolutions =   {"evolutions" : {
+                           "date" :valuedate, 
+                           "prix" :  valueprix
+                           },
+                           "nom" : result[0].nom
+                        }
 
          stuff["data"] = evolutions
          
          res.json(stuff)
       });
 });
-*/
+
 /**
                                           --- Mongodb ---- ok
 **/
-
+/*
 app.get('/api/id/:name', (req, res, next) => {
    let valueprix = []   
    let valuedate = []
@@ -450,6 +456,6 @@ app.get('/api/id/:name', (req, res, next) => {
       }
    })
 });
-
+*/
 
 module.exports = app;
